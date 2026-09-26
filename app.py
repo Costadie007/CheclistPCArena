@@ -4,6 +4,10 @@ import os
 import streamlit as st
 from streamlit_autorefresh import st_autorefresh
 
+# Senha pra acessar o painel de acompanhamento. Troque esse valor pelo que
+# preferir antes de publicar o site.
+SENHA_PAINEL = "arena2026"
+
 # Arquivo onde o progresso fica salvo no servidor.
 # Assim, se alguém fechar a aba e abrir de novo, o progresso continua lá.
 ARQUIVO_ESTADO = "estado_checklist.json"
@@ -104,6 +108,20 @@ modo = st.radio(
 )
 
 if modo == "Painel de acompanhamento (tempo real)":
+    if "painel_autenticado" not in st.session_state:
+        st.session_state.painel_autenticado = False
+
+    if not st.session_state.painel_autenticado:
+        st.title("Painel de acompanhamento")
+        senha_digitada = st.text_input("Senha", type="password")
+        if st.button("Entrar"):
+            if senha_digitada == SENHA_PAINEL:
+                st.session_state.painel_autenticado = True
+                st.rerun()
+            else:
+                st.error("Senha incorreta.")
+        st.stop()
+
     # Atualiza a página sozinha a cada 3 segundos pra refletir o que as
     # outras pessoas estão marcando nos aparelhos delas.
     st_autorefresh(interval=3000, key="atualizacao_painel")
@@ -211,6 +229,12 @@ if st.button("Reiniciar checklist deste roteiro", type="secondary"):
     for chave in list(st.session_state.estado.keys()):
         if chave.startswith(prefixo):
             del st.session_state.estado[chave]
+    # Os checkboxes guardam o próprio valor em st.session_state usando a
+    # mesma chave. Sem apagar isso aqui, eles continuam marcados na tela
+    # mesmo depois de limpar o dicionário "estado" acima.
+    for chave in list(st.session_state.keys()):
+        if chave.startswith(prefixo):
+            del st.session_state[chave]
     salvar_estado(st.session_state.estado)
     st.rerun()
 
