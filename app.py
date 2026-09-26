@@ -55,6 +55,23 @@ ROTEIROS = {
             ],
         },
     },
+    "Iluminação": {
+        "aviso_topo": None,
+        "secoes": {
+            "Antes do culto": [
+                "Checar se os disjuntores estão ligados",
+                "Ligar todos os equipamentos (Parleds, Movies e fumaça)",
+                "Posicionar tudo da melhor forma possível",
+                "Testar tudo antes de começar o evento",
+            ],
+            "Depois do culto": [
+                "Desligar todos os equipamentos da tomada",
+                "Desligar a mesa de luz",
+                "Deixar a mesa organizada para a próxima equipe",
+                "Combinar com o operador do PC Arena quem desliga os disjuntores",
+            ],
+        },
+    },
 }
 
 
@@ -120,11 +137,29 @@ for secao, lista_itens in roteiro["secoes"].items():
                 "Passe a letra antes do ministro terminar a última palavra. "
                 "Dica: passe quando ele começar a cantar a penúltima palavra."
             )
+        if nome_roteiro == "Iluminação":
+            st.info(
+                "Já temos máquina de fumaça, pode usar à vontade mas com "
+                "moderação."
+            )
         st.info(
             "Durante o culto: foco total, evite distrações e conversas "
             "desnecessárias."
         )
+        if nome_roteiro == "Iluminação":
+            st.info(
+                "No louvor, acompanhe a atmosfera da música e faça a "
+                "iluminação como complemento da equipe de louvor. Combine "
+                "com o operador do PC Arena pra usar fundo e parled da "
+                "mesma cor."
+            )
         st.divider()
+
+    if secao == "Depois do culto" and nome_roteiro == "Iluminação":
+        st.warning(
+            "Se o operador do PC Arena não desligar os disjuntores e você "
+            "for embora depois dele, a responsabilidade é sua."
+        )
 
 st.divider()
 
