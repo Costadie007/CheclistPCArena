@@ -2,6 +2,7 @@ import json
 import os
 
 import streamlit as st
+from streamlit_autorefresh import st_autorefresh
 
 # Arquivo onde o progresso fica salvo no servidor.
 # Assim, se alguém fechar a aba e abrir de novo, o progresso continua lá.
@@ -95,6 +96,49 @@ if "estado" not in st.session_state:
     st.session_state.estado = carregar_estado()
 
 st.set_page_config(page_title="Checklist Telão", page_icon="✅")
+
+modo = st.radio(
+    "Modo",
+    ["Marcar itens", "Painel de acompanhamento (tempo real)"],
+    horizontal=True,
+)
+
+if modo == "Painel de acompanhamento (tempo real)":
+    # Atualiza a página sozinha a cada 3 segundos pra refletir o que as
+    # outras pessoas estão marcando nos aparelhos delas.
+    st_autorefresh(interval=3000, key="atualizacao_painel")
+
+    st.title("Painel de acompanhamento")
+    st.caption("Atualiza sozinho a cada 3 segundos. Somente leitura.")
+
+    # Sempre lê do arquivo, porque quem está marcando pode estar numa
+    # sessão diferente da de quem está olhando o painel.
+    estado_geral = carregar_estado()
+
+    for nome_r, dados_r in ROTEIROS.items():
+        prefixo_r = nome_r.replace(" ", "_")
+        total_r = sum(len(lista) for lista in dados_r["secoes"].values())
+        feitos_r = sum(
+            1
+            for chave, valor in estado_geral.items()
+            if chave.startswith(prefixo_r) and valor
+        )
+
+        st.subheader(nome_r)
+        st.progress(feitos_r / total_r if total_r else 0)
+        st.write(f"{feitos_r} de {total_r} concluídos")
+
+        for secao_r, lista_r in dados_r["secoes"].items():
+            with st.expander(secao_r, expanded=False):
+                for indice_r, texto_r in enumerate(lista_r):
+                    chave_r = f"{prefixo_r}-{secao_r}-{indice_r}"
+                    marcado_r = estado_geral.get(chave_r, False)
+                    simbolo = "✅" if marcado_r else "⬜"
+                    st.write(f"{simbolo} {texto_r}")
+
+        st.divider()
+
+    st.stop()
 
 nome_roteiro = st.selectbox("Roteiro", list(ROTEIROS.keys()))
 roteiro = ROTEIROS[nome_roteiro]
