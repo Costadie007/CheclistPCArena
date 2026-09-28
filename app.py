@@ -71,7 +71,12 @@ if modo == "Painel de acompanhamento (tempo real)":
 
     # Sempre le do arquivo, porque quem marca esta em outra sessao.
     estado_geral = carregar_estado()
-    feitos = sum(1 for valor in estado_geral.values() if valor)
+    feitos = sum(
+        1 for chave, valor in estado_geral.items()
+        if chave.startswith("item-") and valor
+    )
+    voluntario = estado_geral.get("voluntario", "").strip()
+    st.write(f"Voluntário na operação: {voluntario or 'não informado'}")
 
     st.progress(feitos / total_itens if total_itens else 0)
     st.write(f"{feitos} de {total_itens} concluídos")
@@ -91,7 +96,19 @@ st.caption("Marque cada item conforme for concluindo. O progresso fica salvo.")
 if AVISO_TOPO:
     st.warning(AVISO_TOPO)
 
-total_feitos = sum(1 for valor in st.session_state.estado.values() if valor)
+nome_voluntario = st.text_input(
+    "Nome do voluntário na operação",
+    value=st.session_state.estado.get("voluntario", ""),
+    key="voluntario_input",
+)
+if nome_voluntario != st.session_state.estado.get("voluntario", ""):
+    st.session_state.estado["voluntario"] = nome_voluntario
+    salvar_estado(st.session_state.estado)
+
+total_feitos = sum(
+    1 for chave, valor in st.session_state.estado.items()
+    if chave.startswith("item-") and valor
+)
 st.progress(total_feitos / total_itens if total_itens else 0)
 st.write(f"{total_feitos} de {total_itens} concluídos")
 
@@ -122,7 +139,7 @@ if st.button("Reiniciar checklist", type="secondary"):
     # Os checkboxes guardam o proprio valor em st.session_state com a mesma
     # chave. Sem apagar isso, continuam marcados na tela apos o reset.
     for chave in list(st.session_state.keys()):
-        if chave.startswith("item-"):
+        if chave.startswith("item-") or chave == "voluntario_input":
             del st.session_state[chave]
     salvar_estado(st.session_state.estado)
     st.rerun()
